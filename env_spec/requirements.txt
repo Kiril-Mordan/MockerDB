@@ -1,0 +1,4 @@
+fastapi
+uvicorn
+mocker-db
+python-dotenv==1.0.0
