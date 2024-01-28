@@ -1,0 +1,8 @@
+embedder_params :
+  {'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2',
+  'processing_type' : 'batch',
+  'tbatch_size' : 500}
+similarity_params : {'space':'cosine'}
+file_path : "./persist/mock_persist"
+persist : True
+embedder_error_tolerance : 0.0
