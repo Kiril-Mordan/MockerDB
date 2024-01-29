@@ -1,0 +1,29 @@
+name: Docker MockerDB Build and Push
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - main.py
+      - conf/mocker_setup_params.yaml
+      - conf/settings.py
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Build and Push Docker Image
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          docker build -t kyriosskia/mocker-db -f env_spec/Dockerfile_run .
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+          docker push kyriosskia/mocker-db:latest
