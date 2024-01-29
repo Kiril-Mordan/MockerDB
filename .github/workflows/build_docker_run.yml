@@ -1,6 +1,8 @@
 name: Docker MockerDB Build and Push
 
 on:
+  workflow_call:
+  workflow_dispatch:
   push:
     branches:
       - main

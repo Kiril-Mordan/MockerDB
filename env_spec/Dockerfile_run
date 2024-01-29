@@ -1,6 +1,10 @@
 # Collect latest image from docker registry
 FROM kyriosskia/mocker-db-dependacies:latest
 
+# Upgrade to the latest version of mockerdb
+RUN pip install --upgrade pip
+RUN pip install mocker-db
+
 # Copy and select as working directory files from pulled docker image
 COPY . /app
 WORKDIR /app
