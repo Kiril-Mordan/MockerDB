@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - .github/workflows/build_docker_base.yml
       - env_spec/requirements.txt
       - env_spec/Dockerfile_build
 
