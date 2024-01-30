@@ -9,5 +9,8 @@ RUN pip install mocker-db
 COPY . /app
 WORKDIR /app
 
+# Making port 80 available outside of the container
+EXPOSE 8000
+
 # Command to run the Uvicorn server
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,23 +1,30 @@
 # MockerDB
 
-This is a crude implementation of a vector database-like solution in python, inspired by simplicity of Redis HASH.
-Its goal is be usable in development in particulr using complex and custom searching strategies.
+<a><img src="https://github.com/Kiril-Mordan/MockerDB/blob/main/docs/mocker_db_logo.png" width="35%" height="35%" align="right" /></a>
+
+This is a crude implementation of a vector database-like solution in python.
+Currently its goal is to simplyfy usecases that require extensive use of open source embeddings from [Sentence-Transformers](https://www.sbert.net/docs/pretrained_models.html), while being simple and flexibale enough to add and test custom searching strategies.
 
 Even though it by no means aims to replace any propper vector database, nevertheless it could be
-usefull as an ephemeral vector database.
+usefull as an ephemeral vector database. Limiting persisting capabilities are available and will be expanded in time.
 
-Its purpuse is to uefull for aplications that either don't need to access previouly stored data, can get away with accessing only small portion of it (fits into RAM) or do not need to persist at all.
+## Run locally
 
-The source code for the python tool itself is available in the reusables repo. This repository is meant to create deployment ready version that one could realistically use to make API with.
-
-## Install package from pypi
-
+Use underlying python package from [pypi](https://pypi.org/project/mocker-db/):
 ```
 pip install mocker-db
 ```
 
-## Run locally
+Run API locally:
+```
+git clone https://github.com/Kiril-Mordan/MockerDB.git
+cd MockerDB
+uvicorn main:app --reload
+```
+
+## Run from pre-built Docker image:
 
 ```
-uvicorn main:app --reload
+docker pull kyriosskia/mocker-db:latest
+docker run -d -p 8000:8000 kyriosskia/mocker-db:latest
 ```
