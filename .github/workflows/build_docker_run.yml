@@ -10,6 +10,7 @@ on:
       - main.py
       - conf/mocker_setup_params.yaml
       - conf/settings.py
+      - env_spec/Dockerfile_run
 
 jobs:
   build_and_push:
