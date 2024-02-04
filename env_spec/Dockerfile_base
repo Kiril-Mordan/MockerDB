@@ -1,5 +1,5 @@
 # Selecting Python version
-FROM python:3.11-slim as builder
+FROM python:3.11-slim
 
 # Setting environment variables to non-interactive, this makes sure
 # that apt-get does not wait for user input during execution
@@ -25,4 +25,4 @@ RUN pip install --upgrade pip
 # Copying requirements for python packages and installing them
 WORKDIR /app
 COPY env_spec/requirements.txt /app/env_spec/requirements.txt
-RUN pip install -r env_spec/requirements.txt
+RUN pip install --no-cache-dir -r env_spec/requirements.txt

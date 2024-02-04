@@ -34,3 +34,4 @@ jobs:
           file: ${{ github.workspace }}/env_spec/Dockerfile_base
           push: true
           tags: kyriosskia/mocker-db-dependancies:latest
+          platforms: linux/amd64
