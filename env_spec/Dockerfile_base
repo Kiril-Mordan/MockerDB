@@ -18,8 +18,6 @@ RUN apt-get update && apt-get install -y \
     gfortran \
     libatlas-base-dev
 
-# Ensure that Python packages installed with --user flag are in PATH
-ENV PATH="/root/.local/bin:${PATH}"
 
 # Upgrade pip to the latest version
 RUN pip install --upgrade pip
@@ -27,4 +25,4 @@ RUN pip install --upgrade pip
 # Copying requirements for python packages and installing them
 WORKDIR /app
 COPY env_spec/requirements.txt /app/env_spec/requirements.txt
-RUN pip install --user -r env_spec/requirements.txt
+RUN pip install -r env_spec/requirements.txt
