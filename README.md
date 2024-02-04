@@ -19,12 +19,16 @@ Run API locally:
 ```
 git clone https://github.com/Kiril-Mordan/MockerDB.git
 cd MockerDB
-uvicorn main:app --reload
+uvicorn main:app --port 8000
 ```
+
+Access localhost at http://127.0.0.1:8000
 
 ## Run from pre-built Docker image:
 
 ```
 docker pull kyriosskia/mocker-db:latest
-docker run -d -p 8000:8000 kyriosskia/mocker-db:latest
+docker run -d -p 8000:80 kyriosskia/mocker-db:latest
 ```
+
+the access at http://localhost:8000

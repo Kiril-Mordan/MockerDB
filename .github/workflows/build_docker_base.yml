@@ -1,6 +1,7 @@
 name: Docker Dependencies Build and Push
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -22,6 +23,6 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
-          docker build -t kyriosskia/mocker-db-dependacies -f env_spec/Dockerfile_base .
+          docker build -t kyriosskia/mocker-db-dependancies -f env_spec/Dockerfile_base .
           docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
           docker push kyriosskia/mocker-db-dependacies:latest

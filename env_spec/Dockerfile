@@ -18,6 +18,8 @@ RUN apt-get update && apt-get install -y \
     gfortran \
     libatlas-base-dev
 
+# Ensure that Python packages installed with --user flag are in PATH
+ENV PATH="/root/.local/bin:${PATH}"
 
 # Upgrade pip to the latest version
 RUN pip install --upgrade pip
@@ -25,4 +27,18 @@ RUN pip install --upgrade pip
 # Copying requirements for python packages and installing them
 WORKDIR /app
 COPY env_spec/requirements.txt /app/env_spec/requirements.txt
-RUN pip install -r env_spec/requirements.txt
+RUN pip install --user -r env_spec/requirements.txt
+
+# Upgrade to the latest version of mockerdb
+RUN pip install --upgrade pip
+RUN pip install mocker-db
+
+# Copy and select as working directory files from pulled docker image
+COPY . /app
+WORKDIR /app
+
+# Making port 80 available outside of the container
+EXPOSE 8000
+
+# Command to run the Uvicorn server
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
