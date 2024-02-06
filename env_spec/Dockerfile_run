@@ -5,12 +5,16 @@ FROM kyriosskia/mocker-db-dependancies:latest
 RUN pip install --upgrade pip
 RUN pip install mocker-db
 
+# Download Embedding models
+RUN python -c "from sentence_transformers import SentenceTransformers; SentenceTransformers('intfloat/multilingual-e5-base')"
+RUN python -c "from sentence_transformers import SentenceTransformers; SentenceTransformers('all-mpnet-base-v2')"
+
 # Copy and select as working directory files from pulled docker image
 COPY . /app
 WORKDIR /app
 
 # Making port 80 available outside of the container
-EXPOSE 80
+EXPOSE 8080
 
 # Command to run the Uvicorn server
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uvicorn", "main:app" , "--host", "0.0.0.0", "--port", "8080"]
