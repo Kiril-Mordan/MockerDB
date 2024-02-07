@@ -28,7 +28,7 @@ Access localhost at http://127.0.0.1:8000
 
 ```
 docker pull kyriosskia/mocker-db:latest
-docker run -d -p 8000:8080 kyriosskia/mocker-db:latest
+docker run -p 8000:8080 kyriosskia/mocker-db:latest
 ```
 
 then access at http://localhost:8000

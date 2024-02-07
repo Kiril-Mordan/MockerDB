@@ -1,5 +1,5 @@
 embedder_params :
-  {'model_name_or_path' : 'paraphrase-multilingual-mpnet-base-v2',
+  {'model_name_or_path' : 'intfloat/multilingual-e5-base',
   'processing_type' : 'batch',
   'tbatch_size' : 500}
 similarity_params : {'space':'cosine'}
