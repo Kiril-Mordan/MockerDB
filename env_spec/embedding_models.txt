@@ -1,0 +1,4 @@
+intfloat/multilingual-e5-base
+intfloat/multilingual-e5-small
+all-mpnet-base-v2
+all-MiniLM-L6-v2
