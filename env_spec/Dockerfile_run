@@ -5,9 +5,14 @@ FROM kyriosskia/mocker-db-dependancies:latest
 RUN pip install --upgrade pip
 RUN pip install mocker-db
 
-# Download Embedding models
-RUN python -c "from sentence_transformers import SentenceTransformers; SentenceTransformers('intfloat/multilingual-e5-base')"
-RUN python -c "from sentence_transformers import SentenceTransformers; SentenceTransformers('all-mpnet-base-v2')"
+# Install Sentence Transformers
+RUN pip install --no-cache-dir sentence-transformers
+
+# Copy the models.txt file into the container
+COPY env_spec/embedding_models.txt /app/models.txt
+
+# Download the Sentence Transformer models listed in models.txt
+RUN python -c "from sentence_transformers import SentenceTransformer; [SentenceTransformer(model.strip()) for model in open('/app/models.txt').readlines()]"
 
 # Copy and select as working directory files from pulled docker image
 COPY . /app

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from mocker_db import MockerDB
+from mocker_db import MockerDB, SentenceTransformerEmbedder
 from conf.settings import MOCKER_SETUP_PARAMS
-
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 
@@ -37,6 +37,10 @@ class SearchRequest(BaseModel):
 class UpdateItem(BaseModel):
     filter_criteria: Dict[str, str]
     update_values: Dict[str, str]
+
+class EmbeddingRequest(BaseModel):
+    texts: List[str]
+    embedding_model: Optional[str]
 
 # start the app and activate mockerdb
 app = FastAPI()
@@ -91,3 +95,35 @@ def search_data(search_request: SearchRequest):
 def delete_data(filter_criteria: Dict[str, str]):
     handler.remove_from_database(filter_criteria)
     return {"message": "Data deleted successfully"}
+
+@app.post("/embed")
+def embed_texts(embedding_request: EmbeddingRequest):
+
+    embedding_params = MOCKER_SETUP_PARAMS['embedder_params']
+
+    init_params = MOCKER_SETUP_PARAMS.copy()  # Start with default setup parameters
+    # update model
+    if embedding_request.embedding_model is not None:
+        init_params["embedder_params"]['model_name_or_path'] = embedding_request.embedding_model
+    # switch cache location
+    init_params["file_path"] = f"./persist/cache_{init_params['embedder_params']['model_name_or_path']}"
+
+    # create insert list of dicts
+    insert = [{'text' : text} for text in embedding_request.texts]
+
+    # Reinitialize the handler with new parameters
+    cache = MockerDB(**init_params)
+    cache.establish_connection()
+
+    # Use the embedder instance to get embeddings for the list of texts
+    handler.insert_values(values_dict_list=insert,
+                            var_for_embedding_name='text',
+                            embed=True)
+
+    # Retrieve list of embeddings
+    embeddings = [handler.search_database(query = query,
+                                          return_keys_list=['embedding'],
+                                          search_results_n=1)[0]['embedding'].tolist() \
+        for query in embedding_request.texts]
+
+    return JSONResponse(content={"embeddings": embeddings})
