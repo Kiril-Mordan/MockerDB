@@ -17,16 +17,11 @@ class InsertItem(BaseModel):
     data: List[Dict[str, Any]]  # List of dictionaries to support various data structures
     var_for_embedding_name: str  # Variable name to be used for embedding
     embed: Optional[bool] = True  # Whether to embed the data
-
-class SearchQuery(BaseModel):
-    query: str
-    search_results_n: Optional[int] = None
-    filter_criteria: Optional[Dict[str, str]] = None
-    return_keys_list: Optional[List[str]] = None
-    perform_similarity_search: Optional[bool] = True
+    database_name: Optional[str] = None
 
 class SearchRequest(BaseModel):
     query: str
+    database_name: Optional[str] = None
     search_results_n: Optional[int] = None
     filter_criteria: Optional[Dict[str, Any]] = None
     similarity_search_type: Optional[str] = None
@@ -34,9 +29,14 @@ class SearchRequest(BaseModel):
     perform_similarity_search: Optional[bool] = None
     return_keys_list: Optional[List[str]] = None
 
+class DeleteItem(BaseModel):
+    filter_criteria: Dict[str, str]
+    database_name: Optional[str] = None
+
 class UpdateItem(BaseModel):
     filter_criteria: Dict[str, str]
     update_values: Dict[str, str]
+    database_name: Optional[str] = None
 
 class EmbeddingRequest(BaseModel):
     texts: List[str]
@@ -44,7 +44,8 @@ class EmbeddingRequest(BaseModel):
 
 # start the app and activate mockerdb
 app = FastAPI()
-handler = MockerDB(**MOCKER_SETUP_PARAMS)
+handlers = {}
+handlers['default'] = MockerDB(**MOCKER_SETUP_PARAMS)
 
 
 # endpoints
@@ -52,10 +53,18 @@ handler = MockerDB(**MOCKER_SETUP_PARAMS)
 def read_root():
     return "Still alive!"
 
+@app.get("/active_handlers")
+def show_handlers():
+
+    handler_names = [hn for hn in handlers]
+    items_in_handlers = [len(handlers[hn].data.keys()) for hn in handlers]
+
+    return {'handlers' : handler_names,
+            'items' : items_in_handlers}
 
 @app.post("/initialize")
 def initialize_database(params: InitializeParams):
-    global handler  # Use global to modify the handler instance
+    global handlers  # Use global to modify the handler instance
     # Update the initialization parameters based on input
     init_params = MOCKER_SETUP_PARAMS.copy()  # Start with default setup parameters
     if params.embedder_params is not None:
@@ -63,8 +72,8 @@ def initialize_database(params: InitializeParams):
     if params.database_name is not None:
         init_params["file_path"] = f"./persist/{params.database_name}"  # Assuming the file path format
     # Reinitialize the handler with new parameters
-    handler = MockerDB(**init_params)
-    handler.establish_connection()
+    handlers[params.database_name] = MockerDB(**init_params)
+    handlers[params.database_name].establish_connection()
     return {"message": "Database initialized with new parameters"}
 
 @app.post("/insert")
@@ -73,14 +82,21 @@ def insert_data(insert_request: InsertItem):
     values_list = insert_request.data
     var_for_embedding_name = insert_request.var_for_embedding_name
     embed = insert_request.embed
+
+    if insert_request.database_name is None:
+        insert_request.database_name = "default"
+
     # Call the insert_values method with the provided parameters
-    handler.insert_values(values_list, var_for_embedding_name, embed)
+    handlers[insert_request.database_name].insert_values(values_list, var_for_embedding_name, embed)
     return {"message": "Data inserted successfully"}
 
 @app.post("/search")
 def search_data(search_request: SearchRequest):
 
-    results = handler.search_database(query=search_request.query,
+    if search_request.database_name is None:
+        search_request.database_name = "default"
+
+    results = handlers[search_request.database_name].search_database(query=search_request.query,
          search_results_n=search_request.search_results_n,
          filter_criteria=search_request.filter_criteria,
          similarity_search_type=search_request.similarity_search_type,
@@ -92,8 +108,14 @@ def search_data(search_request: SearchRequest):
     return {"results": results}
 
 @app.post("/delete")
-def delete_data(filter_criteria: Dict[str, str]):
-    handler.remove_from_database(filter_criteria)
+def delete_data(delete_request: DeleteItem):
+
+    if delete_request.database_name is None:
+        delete_request.database_name = "default"
+
+    filter_criteria = delete_request.filter_criteria
+
+    handlers[delete_request.database_name].remove_from_database(filter_criteria)
     return {"message": "Data deleted successfully"}
 
 @app.post("/embed")
@@ -112,16 +134,16 @@ def embed_texts(embedding_request: EmbeddingRequest):
     insert = [{'text' : text} for text in embedding_request.texts]
 
     # Reinitialize the handler with new parameters
-    cache = MockerDB(**init_params)
-    cache.establish_connection()
+    handlers['cache'] = MockerDB(**init_params)
+    handlers['cache'].establish_connection()
 
     # Use the embedder instance to get embeddings for the list of texts
-    handler.insert_values(values_dict_list=insert,
+    handlers['cache'].insert_values(values_dict_list=insert,
                             var_for_embedding_name='text',
                             embed=True)
 
     # Retrieve list of embeddings
-    embeddings = [handler.search_database(query = query,
+    embeddings = [handlers['cache'].search_database(query = query,
                                           return_keys_list=['embedding'],
                                           search_results_n=1)[0]['embedding'].tolist() \
         for query in embedding_request.texts]
