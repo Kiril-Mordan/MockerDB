@@ -1,46 +1,16 @@
-from fastapi import FastAPI
-from mocker_db import MockerDB, SentenceTransformerEmbedder
-from conf.settings import MOCKER_SETUP_PARAMS
+# api
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+# database
+from mocker_db import MockerDB
+from conf.settings import MOCKER_SETUP_PARAMS, API_SETUP_PARAMS
+# types
+from utils.data_types import *
+# managing memory
+from utils.memory_management import check_and_offload_handlers
+from pympler import asizeof
+import gc
 
-# define datatypes
-class Item(BaseModel):
-    text: str
-
-class InitializeParams(BaseModel):
-    embedder_params: Optional[Dict[str, Any]] = None
-    database_name: Optional[str] = None
-
-class InsertItem(BaseModel):
-    data: List[Dict[str, Any]]  # List of dictionaries to support various data structures
-    var_for_embedding_name: str  # Variable name to be used for embedding
-    embed: Optional[bool] = True  # Whether to embed the data
-    database_name: Optional[str] = None
-
-class SearchRequest(BaseModel):
-    query: str
-    database_name: Optional[str] = None
-    search_results_n: Optional[int] = None
-    filter_criteria: Optional[Dict[str, Any]] = None
-    similarity_search_type: Optional[str] = None
-    similarity_params: Optional[Dict[str, Any]] = None
-    perform_similarity_search: Optional[bool] = None
-    return_keys_list: Optional[List[str]] = None
-
-class DeleteItem(BaseModel):
-    filter_criteria: Dict[str, str]
-    database_name: Optional[str] = None
-
-class UpdateItem(BaseModel):
-    filter_criteria: Dict[str, str]
-    update_values: Dict[str, str]
-    database_name: Optional[str] = None
-
-class EmbeddingRequest(BaseModel):
-    texts: List[str]
-    embedding_model: Optional[str]
 
 # start the app and activate mockerdb
 app = FastAPI()
@@ -58,9 +28,35 @@ def show_handlers():
 
     handler_names = [hn for hn in handlers]
     items_in_handlers = [len(handlers[hn].data.keys()) for hn in handlers]
+    memory_usage = [asizeof.asizeof(handlers[hn])/API_SETUP_PARAMS['memory_scaler_from_bytes'] for hn in handlers]
 
-    return {'handlers' : handler_names,
-            'items' : items_in_handlers}
+    return {
+        'handlers': handler_names,
+        'items': items_in_handlers,
+        'memory_usage': memory_usage
+    }
+
+@app.post("/remove_handlers")
+def remove_handlers(request: RemoveHandlersRequest):
+    removed_handlers = []
+    not_found_handlers = []
+
+    for handler_name in request.handler_names:
+        if handler_name in handlers:
+            # Remove the handler
+            del handlers[handler_name]
+            removed_handlers.append(handler_name)
+        else:
+            not_found_handlers.append(handler_name)
+
+    # Force garbage collection
+    gc.collect()
+
+    if not removed_handlers and not_found_handlers:
+        raise HTTPException(status_code=404, detail=f"Handlers not found: {', '.join(not_found_handlers)}")
+
+    return {"message": f"Removed handlers: {', '.join(removed_handlers)}",
+            "not_found": not_found_handlers}
 
 @app.post("/initialize")
 def initialize_database(params: InitializeParams):
@@ -78,6 +74,7 @@ def initialize_database(params: InitializeParams):
 
 @app.post("/insert")
 def insert_data(insert_request: InsertItem):
+
     # Extract values from the request object
     values_list = insert_request.data
     var_for_embedding_name = insert_request.var_for_embedding_name
@@ -85,6 +82,12 @@ def insert_data(insert_request: InsertItem):
 
     if insert_request.database_name is None:
         insert_request.database_name = "default"
+
+    # Free up memory if needed
+    check_and_offload_handlers(handlers = handlers,
+                               threshold = API_SETUP_PARAMS['memory_reset_limit_mb'],
+                               exception_handlers = [insert_request.database_name],
+                               insert_size = asizeof.asizeof(values_list)/1024**2)
 
     # Call the insert_values method with the provided parameters
     handlers[insert_request.database_name].insert_values(values_list, var_for_embedding_name, embed)
@@ -121,6 +124,7 @@ def delete_data(delete_request: DeleteItem):
 @app.post("/embed")
 def embed_texts(embedding_request: EmbeddingRequest):
 
+
     embedding_params = MOCKER_SETUP_PARAMS['embedder_params']
 
     init_params = MOCKER_SETUP_PARAMS.copy()  # Start with default setup parameters
@@ -132,6 +136,12 @@ def embed_texts(embedding_request: EmbeddingRequest):
 
     # create insert list of dicts
     insert = [{'text' : text} for text in embedding_request.texts]
+
+    # Free up memory if needed
+    check_and_offload_handlers(handlers = handlers,
+                               threshold = API_SETUP_PARAMS['memory_reset_limit_mb'],
+                               exception_handlers = ['cache'],
+                               insert_size = asizeof.asizeof(insert)/1024**2)
 
     # Reinitialize the handler with new parameters
     handlers['cache'] = MockerDB(**init_params)
