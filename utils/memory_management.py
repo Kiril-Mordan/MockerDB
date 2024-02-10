@@ -1,22 +1,38 @@
 import psutil
 import gc
+from pympler import asizeof
 
 def check_and_offload_handlers(handlers: dict ,
-                               threshold : int,
+                               allocated_bytes : int,
                                exception_handlers : list,
-                               insert_size : float):
+                               insert_size_bytes : float):
 
-    insert_overhead = insert_size*2
-
-    if insert_overhead > threshold:
-        raise MemoryError(f"Insert is larger then alocated memory: {insert_overhead} > {threshold}")
+    # Assume larger size
+    insert_overhead = insert_size_bytes*3
+    # Size of handlers
+    size_of_handlers = asizeof.asizeof(handlers)
 
     # Get available memory
-    available_memory = psutil.virtual_memory().available + insert_size*2
+    if allocated_bytes == 0:
+        available_memory = psutil.virtual_memory().available
+    else:
+        available_memory = max(allocated_bytes, size_of_handlers)
+        # Check if insert can even fit into memory
+        insert_larger_then_memory = insert_overhead > available_memory
+        if insert_larger_then_memory:
+            raise MemoryError(f"Insert is larger then alocated memory: {insert_overhead} > {allocated_bytes}")
+        # if no handlers to offload, check both usage and insert
+        insert_larger_then_memory2 = (size_of_handlers + insert_overhead > available_memory) and (len(handlers)<=1)
+        if insert_larger_then_memory2:
+            raise MemoryError(f"Insert is larger then alocated memory: {size_of_handlers + insert_overhead} > {allocated_bytes}")
 
-    if available_memory < threshold:
+    anticipated_usage = size_of_handlers + insert_overhead
+
+    if anticipated_usage > available_memory:
         # Logic to select handlers to offload (simplified example)
-        handler_names_to_offload = select_handlers_to_offload(exception_handlers = exception_handlers)
+        handler_names_to_offload = select_handlers_to_offload(handlers = handlers,
+                                                              exception_handlers = exception_handlers,
+                                                              insert_overhead = insert_overhead)
 
         # Offload selected handlers
         for handler_name in handler_names_to_offload:
@@ -26,17 +42,27 @@ def check_and_offload_handlers(handlers: dict ,
         # Force garbage collection to immediately free up memory
         gc.collect()
 
-def select_handlers_to_offload(handlers : dict, exception_handlers : list):
-    # Implement your policy for selecting handlers to offload
-    # This could be based on LRU, handlers with least data, etc.
-    # Simplified example: offload the first two handlers
+def select_handlers_to_offload(handlers: dict, exception_handlers: list, insert_overhead : float):
+    # Calculate scaled memory usage for each handler
+    memory_usage = {hn: asizeof.asizeof(handlers[hn]) for hn in handlers}
 
+    # Sort handlers by memory usage in descending order
+    sorted_handlers_by_memory = sorted(memory_usage.items(), key=lambda x: x[1], reverse=True)
 
+    # Free up memory until insert can fit
+    handlers_to_offload = []
+    accumulated_memory_freed = 0
 
-    all_handlers = list(handlers.keys())
+    print(f"Attempting to free {insert_overhead/1024**2} MB")
 
-    handlers_available_for_removal = [h for h in all_handlers \
-        if h not in exception_handlers]
+    for hn, memory in sorted_handlers_by_memory:
+        if hn in exception_handlers:
+            continue  # Skip exception handlers
+        if accumulated_memory_freed >= insert_overhead:
+            break  # Stop if we have freed enough memory
+        handlers_to_offload.append(hn)
+        accumulated_memory_freed += memory
 
+    print(f"Offloading {handlers_to_offload} handlers")
 
-    return handlers_available_for_removal[:2]
+    return handlers_to_offload

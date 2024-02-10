@@ -85,9 +85,9 @@ def insert_data(insert_request: InsertItem):
 
     # Free up memory if needed
     check_and_offload_handlers(handlers = handlers,
-                               threshold = API_SETUP_PARAMS['memory_reset_limit_mb'],
+                               allocated_bytes = API_SETUP_PARAMS['allocated_mb']*1024**2,
                                exception_handlers = [insert_request.database_name],
-                               insert_size = asizeof.asizeof(values_list)/1024**2)
+                               insert_size_bytes = asizeof.asizeof(values_list))
 
     # Call the insert_values method with the provided parameters
     handlers[insert_request.database_name].insert_values(values_list, var_for_embedding_name, embed)
@@ -125,23 +125,21 @@ def delete_data(delete_request: DeleteItem):
 def embed_texts(embedding_request: EmbeddingRequest):
 
 
-    embedding_params = MOCKER_SETUP_PARAMS['embedder_params']
-
     init_params = MOCKER_SETUP_PARAMS.copy()  # Start with default setup parameters
     # update model
     if embedding_request.embedding_model is not None:
         init_params["embedder_params"]['model_name_or_path'] = embedding_request.embedding_model
     # switch cache location
-    init_params["file_path"] = f"./persist/cache_{init_params['embedder_params']['model_name_or_path']}"
+    init_params["file_path"] = f"./persist/cache_{init_params['embedder_params']['model_name_or_path'].replace('/','_')}"
 
     # create insert list of dicts
     insert = [{'text' : text} for text in embedding_request.texts]
 
     # Free up memory if needed
     check_and_offload_handlers(handlers = handlers,
-                               threshold = API_SETUP_PARAMS['memory_reset_limit_mb'],
+                               allocated_bytes = API_SETUP_PARAMS['allocated_mb']*1024**2,
                                exception_handlers = ['cache'],
-                               insert_size = asizeof.asizeof(insert)/1024**2)
+                               insert_size_bytes = asizeof.asizeof(insert))
 
     # Reinitialize the handler with new parameters
     handlers['cache'] = MockerDB(**init_params)
