@@ -11,7 +11,6 @@ on:
       - conf/mocker_setup_params.yaml
       - conf/settings.py
       - env_spec/Dockerfile_run
-      - env_spec/embedding_models.txt
 
 jobs:
   build_and_push:
