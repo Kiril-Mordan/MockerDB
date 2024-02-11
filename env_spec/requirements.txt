@@ -2,4 +2,6 @@ fastapi
 uvicorn
 mocker-db
 python-dotenv==1.0.0
-pympler
+sentence-transformers==2.2.2
+pympler==1.0.1
+psutil==5.9.5

@@ -9,6 +9,7 @@ on:
       - .github/workflows/build_docker_base.yml
       - env_spec/requirements.txt
       - env_spec/Dockerfile_build
+      - env_spec/embedding_models.txt
 
 jobs:
   build_and_push:
