@@ -135,23 +135,28 @@ def embed_texts(embedding_request: EmbeddingRequest):
     # create insert list of dicts
     insert = [{'text' : text} for text in embedding_request.texts]
 
+
+    # Reinitialize the handler with new parameters
+    cache_name = f"cache_{init_params['embedder_params']['model_name_or_path'].replace('/','_')}"
+
     # Free up memory if needed
     check_and_offload_handlers(handlers = handlers,
                                allocated_bytes = API_SETUP_PARAMS['allocated_mb']*1024**2,
-                               exception_handlers = ['cache'],
+                               exception_handlers = [cache_name],
                                insert_size_bytes = asizeof.asizeof(insert))
 
-    # Reinitialize the handler with new parameters
-    handlers['cache'] = MockerDB(**init_params)
-    handlers['cache'].establish_connection()
+    if cache_name not in [hn for hn in handlers]:
+
+        handlers[cache_name] = MockerDB(**init_params)
+        handlers[cache_name].establish_connection()
 
     # Use the embedder instance to get embeddings for the list of texts
-    handlers['cache'].insert_values(values_dict_list=insert,
+    handlers[cache_name].insert_values(values_dict_list=insert,
                             var_for_embedding_name='text',
                             embed=True)
 
     # Retrieve list of embeddings
-    embeddings = [handlers['cache'].search_database(query = query,
+    embeddings = [handlers[cache_name].search_database(query = query,
                                           return_keys_list=['embedding'],
                                           search_results_n=1)[0]['embedding'].tolist() \
         for query in embedding_request.texts]
