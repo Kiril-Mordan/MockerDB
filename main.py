@@ -11,11 +11,11 @@ from utils.memory_management import check_and_offload_handlers
 from pympler import asizeof
 import gc
 
-
 # start the app and activate mockerdb
 app = FastAPI()
 handlers = {}
 handlers['default'] = MockerDB(**MOCKER_SETUP_PARAMS)
+
 
 
 # endpoints
@@ -23,7 +23,18 @@ handlers['default'] = MockerDB(**MOCKER_SETUP_PARAMS)
 def read_root():
     return "Still alive!"
 
-@app.get("/active_handlers")
+@app.get("/active_handlers",
+         responses={
+             200: {"description": "Returns a list of active handlers along with their item counts and memory usage.",
+                   "content": {
+                        "application/json": {
+                            "example": {
+                                "handlers": ["default", "test_db1"],
+                                "items": [0, 103],
+                                "memory_usage": [1.2714920043945312, 1.6513137817382812]
+                            }
+                        }
+                    }}})
 def show_handlers():
 
     handler_names = [hn for hn in handlers]
@@ -36,7 +47,28 @@ def show_handlers():
         'memory_usage': memory_usage
     }
 
-@app.post("/remove_handlers")
+@app.post("/remove_handlers",
+          responses={
+            200: {"description": "Removes specified handlers from the application.",
+                   "content": {
+                        "application/json": {
+                            "example": {
+                                "message": "Removed handlers: handler1, handler2",
+                                "not_found": ["handler3_not_found"]
+                                }
+                        }
+                    }
+                   },
+
+            404: {
+                "description": "One or more handlers not found.",
+                "content": {
+                    "application/json": {
+                        "example": {
+                            "detail": "Handlers not found: handler3_not_found"
+                        }
+                    }
+                }}})
 def remove_handlers(request: RemoveHandlersRequest):
     removed_handlers = []
     not_found_handlers = []
@@ -58,7 +90,16 @@ def remove_handlers(request: RemoveHandlersRequest):
     return {"message": f"Removed handlers: {', '.join(removed_handlers)}",
             "not_found": not_found_handlers}
 
-@app.post("/initialize")
+@app.post("/initialize", responses={
+    200: {
+        "description": "Database initialization response",
+        "content": {
+            "application/json": {
+                "example": {"message": "Database initialized with new parameters"}
+            }
+        }
+    }
+})
 def initialize_database(params: InitializeParams):
     global handlers  # Use global to modify the handler instance
     # Update the initialization parameters based on input
@@ -72,7 +113,24 @@ def initialize_database(params: InitializeParams):
     handlers[params.database_name].establish_connection()
     return {"message": "Database initialized with new parameters"}
 
-@app.post("/insert")
+@app.post("/insert", responses={
+    200: {
+        "description": "Successful insertion response",
+        "content": {
+            "application/json": {
+                "example": {"message": "Data inserted successfully"}
+            }
+        }
+    },
+    400: {
+        "description": "Invalid request",
+        "content": {
+            "application/json": {
+                "example": {"detail": "Invalid data provided"}
+            }
+        }
+    }
+})
 def insert_data(insert_request: InsertItem):
 
     # Extract values from the request object
@@ -93,7 +151,31 @@ def insert_data(insert_request: InsertItem):
     handlers[insert_request.database_name].insert_values(values_list, var_for_embedding_name, embed)
     return {"message": "Data inserted successfully"}
 
-@app.post("/search")
+@app.post("/search", responses={
+    200: {
+        "description": "Search results based on query and criteria",
+        "content": {
+            "application/json": {
+                "example": {
+                    "results": [
+                        {
+                            "text": "Short. Variation 37: Short.",
+                            "other_field": "Additional data 1"
+                        },
+                        {
+                            "text": "The quick brown fox jumps over the lazy dog. Variation 38: the dog. quick brown lazy The fox jumps over",
+                            "other_field": "Additional data 1"
+                        },
+                        {
+                            "text": "The quick brown fox jumps over the lazy dog. Variation 39: over lazy the jumps brown quick The dog. fox",
+                            "other_field": "Additional data 1"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+})
 def search_data(search_request: SearchRequest):
 
     if search_request.database_name is None:
@@ -110,7 +192,16 @@ def search_data(search_request: SearchRequest):
 
     return {"results": results}
 
-@app.post("/delete")
+@app.post("/delete", responses={
+    200: {
+        "description": "Confirmation of data deletion",
+        "content": {
+            "application/json": {
+                "example": {"message": "Data deleted successfully"}
+            }
+        }
+    }
+})
 def delete_data(delete_request: DeleteItem):
 
     if delete_request.database_name is None:
@@ -121,7 +212,21 @@ def delete_data(delete_request: DeleteItem):
     handlers[delete_request.database_name].remove_from_database(filter_criteria)
     return {"message": "Data deleted successfully"}
 
-@app.post("/embed")
+@app.post("/embed", responses={
+    200: {
+        "description": "Generates embeddings for the provided list of texts.",
+        "content": {
+            "application/json": {
+                "example": {
+                    "embeddings": [
+                        [0.06307613104581833, -0.012639996595680714, "...", 0.04296654835343361, 0.06654967367649078],
+                        [0.023942897096276283, -0.03624798730015755, "...", 0.061928872019052505, 0.07419337332248688]
+                    ]
+                }
+            }
+        }
+    }
+})
 def embed_texts(embedding_request: EmbeddingRequest):
 
 

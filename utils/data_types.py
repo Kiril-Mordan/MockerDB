@@ -1,6 +1,6 @@
 
 # types
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 
 
@@ -9,28 +9,38 @@ class Item(BaseModel):
     text: str
 
 class InitializeParams(BaseModel):
-    embedder_params: Optional[Dict[str, Any]] = None
-    database_name: Optional[str] = None
+    database_name: Optional[str] = Field(default=None, example="custom_db_name")
+    embedder_params: Optional[Dict[str, Any]] = Field(default=None, example={
+        "model_name_or_path": "intfloat/multilingual-e5-base",
+        "tbatch_size": 64,
+        "processing_type": "batch"
+    })
 
 class InsertItem(BaseModel):
-    data: List[Dict[str, Any]]  # List of dictionaries to support various data structures
-    var_for_embedding_name: str  # Variable name to be used for embedding
-    embed: Optional[bool] = True  # Whether to embed the data
-    database_name: Optional[str] = None
+    data: List[Dict[str, Any]] = Field(
+        ...,
+        example=[
+            {"text": "Example text 1", "other_field": "Additional data"},
+            {"text": "Example text 2", "other_field": "Additional data"}
+        ]
+    )
+    var_for_embedding_name: str = Field(..., example="text")
+    embed: Optional[bool] = Field(default=True, example=True)
+    database_name: Optional[str] = Field(default=None, example="custom_db_name")
 
 class SearchRequest(BaseModel):
-    query: str
-    database_name: Optional[str] = None
-    search_results_n: Optional[int] = None
-    filter_criteria: Optional[Dict[str, Any]] = None
-    similarity_search_type: Optional[str] = None
-    similarity_params: Optional[Dict[str, Any]] = None
-    perform_similarity_search: Optional[bool] = None
-    return_keys_list: Optional[List[str]] = None
+    query: str = Field(..., example="example search query")
+    database_name: Optional[str] = Field(default=None, example="custom_db_name")
+    search_results_n: Optional[int] = Field(default=None, example=3)
+    filter_criteria: Optional[Dict[str, Any]] = Field(default=None, example={"other_field": "Additional data 1"})
+    similarity_search_type: Optional[str] = Field(default=None, example="linear")
+    similarity_params: Optional[Dict[str, Any]] = Field(default=None, example={"space": "cosine"})
+    perform_similarity_search: Optional[bool] = Field(default=None, example=True)
+    return_keys_list: Optional[List[str]] = Field(default=None, example=["text", "other_field"])
 
 class DeleteItem(BaseModel):
-    filter_criteria: Dict[str, str]
-    database_name: Optional[str] = None
+    database_name: Optional[str] = Field(default=None, example="custom_db_name")
+    filter_criteria: Dict[str, str] = Field(..., example={"other_field": "Additional data 1"})
 
 class UpdateItem(BaseModel):
     filter_criteria: Dict[str, str]
@@ -38,8 +48,9 @@ class UpdateItem(BaseModel):
     database_name: Optional[str] = None
 
 class EmbeddingRequest(BaseModel):
-    texts: List[str]
-    embedding_model: Optional[str]
+    texts: List[str] = Field(..., example=["Short. Variation 1: Short.",
+                                           "Another medium-length example, aiming to test the variability in processing different lengths of text inputs. Variation 2: processing lengths medium-length example, in inputs. to variability aiming test of text different the Another"])
+    embedding_model: Optional[str] = Field(default="intfloat/multilingual-e5-small", example="intfloat/multilingual-e5-small")
 
 class RemoveHandlersRequest(BaseModel):
-    handler_names: List[str]
+    handler_names: List[str] = Field(..., example=["handler1", "handler2"])
