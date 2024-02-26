@@ -32,3 +32,190 @@ docker run -p 8000:8080 kyriosskia/mocker-db:latest
 ```
 
 then access at http://localhost:8000
+
+
+## API Endpoints
+
+### Root Endpoint
+
+- **Method**: GET
+- **URL**: `/`
+- **Description**: Checks if the API is running.
+- **Response**: Returns a simple string message indicating the API is alive.
+
+### Show Active Handlers
+
+- **Method**: GET
+- **URL**: `/active_handlers`
+- **Description**: Displays the current active handlers, the number of items they manage, and their memory usage in megabytes.
+- **Response**:
+  ```json
+  {
+    "handlers": [
+        "default",
+        "test_db1"
+    ],
+    "items": [
+        0,
+        103
+    ],
+    "memory_usage": [
+        1.2714920043945312,
+        1.6513137817382812
+    ]
+  }
+  ```
+
+### Remove Handlers
+
+- **Method**: POST
+- **URL**: `/remove_handlers`
+- **Description**: Removes specified handlers from the application.
+- **Request Body**:
+  ```json
+  {
+  "handler_names": ["handler1", "handler2"]
+  }
+  ```
+- **Response**:
+  ```json
+  {
+  "message": "Removed handlers: handler1, handler2",
+  "not_found": ["handler3_not_found"]
+  }
+  ```
+
+### Initialize Database
+
+- **Method**: POST
+- **URL**: `/initialize`
+- **Description**:  Initializes the database with custom parameters.
+- **Request Body**:
+  ```json
+  {
+  "database_name": "custom_db_name",
+  "embedder_params": {"model_name_or_path": "intfloat/multilingual-e5-base",
+                      "tbatch_size": 64,
+                      "processing_type" : "batch"}
+  }
+  ```
+- **Response**:
+  ```json
+  {
+  "message": "Database initialized with new parameters"
+  }
+  ```
+
+### Insert Data
+
+- **Method**: POST
+- **URL**: `/insert`
+- **Description**:  Inserts data into the specified database.
+- **Request Body**:
+  ```json
+  {
+  "data": [
+    {"text": "Example text 1", "other_field": "Additional data"},
+    {"text": "Example text 2", "other_field": "Additional data"}],
+  "var_for_embedding_name": "text",
+  "embed": true,
+  "database_name": "custom_db_name"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+  "message": "Data inserted successfully"
+  }
+  ```
+
+### Search Data
+
+- **Method**: POST
+- **URL**: `/search`
+- **Description**: Searches the database based on the provided query and criteria.
+- **Request Body**:
+  ```json
+  {
+  "query": "example search query",
+  "search_results_n": 3,
+  "similarity_search_type": "linear",
+  "similarity_params": {"space": "cosine"},
+  "filter_criteria": {"other_field": "Additional data 1"},
+  "perform_similarity_search": true,
+  "return_keys_list": ["text","other_field"],
+  "database_name": "custom_db_name"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "results": [
+        {
+            "text": "Short. Variation 37: Short.",
+            "other_field": "Additional data 1"
+        },
+        {
+            "text": "The quick brown fox jumps over the lazy dog. Variation 38: the dog. quick brown lazy The fox jumps over",
+            "other_field": "Additional data 1"
+        },
+        {
+            "text": "The quick brown fox jumps over the lazy dog. Variation 39: over lazy the jumps brown quick The dog. fox",
+            "other_field": "Additional data 1"
+        }
+    ]
+  }
+  ```
+
+### Delete Data
+
+- **Method**: POST
+- **URL**: `/delete`
+- **Description**: Deletes data from the database based on filter criteria.
+- **Request Body**:
+  ```json
+  {
+  "database_name": "custom_db_name",
+  "filter_criteria": {"other_field": "Additional data 1"}
+  }
+  ```
+- **Response**:
+  ```json
+  {
+  "message": "Data deleted successfully"
+  }
+  ```
+
+### Embed Texts
+
+- **Method**: POST
+- **URL**: `/embed`
+- **Description**: Generates embeddings for the provided list of texts.
+- **Request Body**:
+  ```json
+  {
+  "texts": ["Short. Variation 1: Short.",
+            "Another medium-length example, aiming to test the variability in processing different lengths of text inputs. Variation 2: processing lengths medium-length example, in inputs. to variability aiming test of text different the Another"],
+  "embedding_model": "intfloat/multilingual-e5-small"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "embeddings": [
+        [
+            0.06307613104581833,
+            -0.012639996595680714,
+            ...,
+            0.04296654835343361,
+            0.06654967367649078
+        ],
+        [
+            0.023942897096276283,
+            -0.03624798730015755,
+            ...,
+            0.061928872019052505,
+            0.07419337332248688
+        ]]
+  }
+  ```
