@@ -8,6 +8,12 @@ with open("./conf/mocker_setup_params.yaml", 'r') as yaml_file:
 with open("./conf/api_setup_params.yaml", 'r') as yaml_file:
     API_SETUP_PARAMS = yaml.safe_load(yaml_file)
 
+# api version
+with open("./env_spec/lsts_versions.yaml", 'r') as yaml_file:
+    LSTS_VERSIONS = yaml.safe_load(yaml_file)
+
+API_VERSION = LSTS_VERSIONS['api_version']
+
 # read-in paramers values from env
 EMBEDDER_PARAMS = os.getenv("EMBEDDER_PARAMS")
 SIMILARITY_PARAMS = os.getenv("SIMILARITY_PARAMS")
