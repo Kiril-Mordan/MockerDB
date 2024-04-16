@@ -4,5 +4,6 @@ embedder_params :
   'tbatch_size' : 500}
 similarity_params : {'space':'cosine'}
 file_path : "./persist/mock_persist"
+embs_file_path : "./persist/mock_embs_persist"
 persist : True
 embedder_error_tolerance : 0.0

@@ -8,6 +8,7 @@ on:
       - main
     paths:
       - main.py
+      - utils/*
       - conf/mocker_setup_params.yaml
       - conf/settings.py
       - env_spec/Dockerfile_run
@@ -36,6 +37,21 @@ jobs:
             file: ${{ github.workspace }}/env_spec/Dockerfile_run
             push: true
             tags: kyriosskia/mocker-db:latest
+
+        - name: Update API version
+          run: |
+            chmod +x tools/get_update_package_version.sh
+            chmod +x tools/update_api_version.sh
+
+            ./tools/get_update_package_version.sh
+            ./tools/update_api_version.sh
+
+        - name: Add and push tag
+          run: |
+            chmod +x tools/make_and_push_tag.sh
+
+            ./tools/update_api_version.sh
+
 
 
 

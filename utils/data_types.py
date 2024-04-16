@@ -1,3 +1,4 @@
+# DATA TYPES FOR MOCKER-DB ENDPOINTS
 
 # types
 from pydantic import BaseModel, Field
@@ -24,12 +25,12 @@ class InsertItem(BaseModel):
             {"text": "Example text 2", "other_field": "Additional data"}
         ]
     )
-    var_for_embedding_name: str = Field(..., example="text")
+    var_for_embedding_name: Optional[str] = Field(default=None, example="text")
     embed: Optional[bool] = Field(default=True, example=True)
     database_name: Optional[str] = Field(default=None, example="custom_db_name")
 
 class SearchRequest(BaseModel):
-    query: str = Field(..., example="example search query")
+    query: Optional[str] = Field(default=None, example="example search query")
     database_name: Optional[str] = Field(default=None, example="custom_db_name")
     search_results_n: Optional[int] = Field(default=None, example=3)
     filter_criteria: Optional[Dict[str, Any]] = Field(default=None, example={"other_field": "Additional data 1"})
@@ -40,7 +41,7 @@ class SearchRequest(BaseModel):
 
 class DeleteItem(BaseModel):
     database_name: Optional[str] = Field(default=None, example="custom_db_name")
-    filter_criteria: Dict[str, str] = Field(..., example={"other_field": "Additional data 1"})
+    filter_criteria: Optional[Dict[str, str]] = Field(default=None, example={"other_field": "Additional data 1"})
 
 class UpdateItem(BaseModel):
     filter_criteria: Dict[str, str]
