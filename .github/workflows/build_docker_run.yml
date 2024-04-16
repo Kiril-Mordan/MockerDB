@@ -12,6 +12,7 @@ on:
       - conf/mocker_setup_params.yaml
       - conf/settings.py
       - env_spec/Dockerfile_run
+      - .github/workflows/*
 
 jobs:
   build_and_push:
@@ -20,6 +21,27 @@ jobs:
     steps:
         - name: Checkout code
           uses: actions/checkout@v2
+
+        - name: Set up Python
+          uses: actions/setup-python@v2
+          with:
+            python-version: 3.11
+
+        - name: Update API version
+          run: |
+            pip install mocker-db
+
+            chmod +x tools/get_update_package_version.sh
+            chmod +x tools/update_api_version.sh
+
+            ./tools/get_update_package_version.sh
+            ./tools/update_api_version.sh
+
+        - name: Add and push tag
+          run: |
+            chmod +x tools/make_and_push_tag.sh
+
+            ./tools/make_and_push_tag.sh
 
         - name: Set up Docker Buildx
           uses: docker/setup-buildx-action@v1
@@ -38,19 +60,7 @@ jobs:
             push: true
             tags: kyriosskia/mocker-db:latest
 
-        - name: Update API version
-          run: |
-            chmod +x tools/get_update_package_version.sh
-            chmod +x tools/update_api_version.sh
 
-            ./tools/get_update_package_version.sh
-            ./tools/update_api_version.sh
-
-        - name: Add and push tag
-          run: |
-            chmod +x tools/make_and_push_tag.sh
-
-            ./tools/update_api_version.sh
 
 
 
