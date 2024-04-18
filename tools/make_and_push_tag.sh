@@ -10,14 +10,9 @@ if [[ -z "$api_version" ]]; then
     exit 1
 fi
 
-
-git config --local user.email "action@github.com"
-git config --local user.name "GitHub Action"
-git pull origin HEAD:main
-
 # Add updated versions file
 git add env_spec/lsts_versions.yaml
-git commit -m "Update configuration to $api_version"
+git commit -m "Update README & Update configuration to $api_version"
 
 # Create a new tag with the api_version
 git tag -a "$api_version" -m "API version $api_version"
