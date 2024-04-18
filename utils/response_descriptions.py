@@ -1,7 +1,7 @@
 # RESPONSE DESCRIPTIONS FOR MOCKER-DB ENDPOINTS
 
 ActivateHandlersDesc = {
-             200: {"description": "Returns a list of active handlers along with their item counts and memory usage.",
+             200: {"description": "A list of active handlers along with their item counts and memory usage.",
                    "content": {
                         "application/json": {
                             "example": {
@@ -13,7 +13,7 @@ ActivateHandlersDesc = {
                     }}}
 
 RemoveHandlersDesc = {
-            200: {"description": "Removes specified handlers from the application.",
+            200: {"description": "Specified handlers are removed from the application.",
                    "content": {
                         "application/json": {
                             "example": {
@@ -66,7 +66,7 @@ InsertDesc = {
 
 SearchDesc = {
     200: {
-        "description": "Search results based on query and criteria",
+        "description": "Searched results from selected database.",
         "content": {
             "application/json": {
                 "example": {
@@ -103,7 +103,7 @@ DeleteDesc = {
 
 EmbedDesc = {
     200: {
-        "description": "Generates embeddings for the provided list of texts.",
+        "description": "A list of embeddings for each of provided text elements.",
         "content": {
             "application/json": {
                 "example": {
