@@ -1,6 +1,6 @@
 # MockerDB
 
-<a><img src="https://github.com/Kiril-Mordan/MockerDB/blob/main/docs/mocker_db_logo.png" width="35%" height="35%" align="right" /></a>
+<a><img src="https://github.com/Kiril-Mordan/MockerDB/raw/main/docs/mocker_db_logo.png" width="35%" height="35%" align="right" /></a>
 
 This is a crude implementation of a vector database-like solution in python.
 Currently its goal is to simplyfy usecases that require extensive use of open source embeddings from [Sentence-Transformers](https://www.sbert.net/docs/pretrained_models.html), while being simple and flexibale enough to add and test custom searching strategies.
