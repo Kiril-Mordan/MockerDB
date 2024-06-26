@@ -3,6 +3,7 @@ import numpy as np
 # api
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 # database
 from mocker_db import MockerDB
 from conf.settings import MOCKER_SETUP_PARAMS, API_SETUP_PARAMS, API_VERSION
@@ -20,6 +21,9 @@ app = FastAPI(version=API_VERSION)
 handlers = {}
 handlers['default'] = MockerDB(**MOCKER_SETUP_PARAMS)
 
+
+# Mount the MkDocs static files
+app.mount("/mkdocs", StaticFiles(directory="mkdocs/site", html=True), name="mkdocs")
 
 # endpoints
 @app.get("/")

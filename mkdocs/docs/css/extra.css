@@ -1,0 +1,38 @@
+/* Ensure tables are scrollable horizontally */
+table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+/* Ensure tables and their parent divs don't overflow the content area */
+.dataframe {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.dataframe thead th {
+  text-align: right;
+}
+
+.dataframe tbody tr th {
+  vertical-align: top;
+}
+
+.dataframe tbody tr th:only-of-type {
+  vertical-align: middle;
+}
+
+/* Ensure the whole content area is scrollable */
+.md-content__inner {
+  overflow-x: auto;
+  padding: 20px; /* Add some padding for better readability */
+}
+
+/* Fix layout issues caused by the theme */
+.md-main__inner {
+  max-width: none;
+}
