@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # create API_ENDPOINTS
 python ./tools/make_endpoint_readme.py
 

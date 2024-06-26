@@ -22,6 +22,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r env_spec/requirements.txt
+        pip install mocker-db
 
     - name: Update API version
       run: |
@@ -60,4 +61,13 @@ jobs:
         git add README.md docs/API_ENDPOINTS.md
 
         ./tools/make_and_push_tag.sh
+
+    - name: Update docker image description
+      env:
+        DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        DOCKER_HUB_REPOSITORY: "mocker-db"
+      run: |
+        chmod +x ./tools/update_docker_hub_description.sh
+        ./tools/update_docker_hub_description.sh "$DOCKER_HUB_USERNAME" "$DOCKER_HUB_PASSWORD" "$DOCKER_HUB_REPOSITORY"
 
