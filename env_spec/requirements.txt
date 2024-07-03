@@ -2,7 +2,7 @@ fastapi==0.111.0
 uvicorn==0.29.0
 mocker-db
 mkdocs==1.6.0
-mkdocs-material=9.5.27
+mkdocs-material==9.5.27
 python-dotenv==1.0.0
 sentence-transformers==2.2.2
 pympler==1.0.1
