@@ -1,5 +1,6 @@
 # essential
 import numpy as np
+import os
 # api
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
@@ -15,6 +16,8 @@ from utils.response_descriptions import *
 from utils.memory_management import check_and_offload_handlers
 from pympler import asizeof
 import gc
+# other
+from utils.other import extract_directory
 
 # start the app and activate mockerdb
 app = FastAPI(version=API_VERSION)
@@ -80,8 +83,10 @@ def initialize_database(params: InitializeParams):
     if params.embedder_params is not None:
         init_params["embedder_params"] = params.embedder_params
     if params.database_name is not None:
-        init_params["file_path"] = f"./persist/mocker_{params.database_name}"  # Assuming the file path format
-        init_params["embs_file_path"] = f"./persist/embs_{params.database_name}"
+        init_params["file_path"] = os.path.join(extract_directory(MOCKER_SETUP_PARAMS["file_path"]),
+                                                f"mocker_{params.database_name}")  # Assuming the file path format
+        init_params["embs_file_path"] = os.path.join(extract_directory(MOCKER_SETUP_PARAMS["embs_file_path"]),
+                                                     f"embs_{params.database_name}")
     # Reinitialize the handler with new parameters
     handlers[params.database_name] = MockerDB(**init_params)
     handlers[params.database_name].establish_connection()
@@ -168,8 +173,10 @@ def embed_texts(embedding_request: EmbeddingRequest):
     if embedding_request.embedding_model is not None:
         init_params["embedder_params"]['model_name_or_path'] = embedding_request.embedding_model
     # switch cache location
-    init_params["file_path"] = f"./persist/cache_mocker_{init_params['embedder_params']['model_name_or_path'].replace('/','_')}"
-    init_params["embs_file_path"] = f"./persist/cache_embs_{init_params['embedder_params']['model_name_or_path'].replace('/','_')}"
+    init_params["file_path"] = os.path.join(extract_directory(MOCKER_SETUP_PARAMS["file_path"]),
+                                            f"cache_mocker_{init_params['embedder_params']['model_name_or_path'].replace('/','_')}")
+    init_params["embs_file_path"] = os.path.join(extract_directory(MOCKER_SETUP_PARAMS["embs_file_path"]),
+                                                 f"cache_embs_{init_params['embedder_params']['model_name_or_path'].replace('/','_')}")
 
     # create insert list of dicts
     insert = [{'text' : text} for text in embedding_request.texts]
