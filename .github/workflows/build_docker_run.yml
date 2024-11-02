@@ -7,10 +7,6 @@ on:
     branches:
       - main
     paths:
-      - main.py
-      - utils/*
-      - conf/mocker_setup_params.yaml
-      - conf/settings.py
       - env_spec/Dockerfile_run
       - .github/workflows/*
 
