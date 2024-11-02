@@ -28,7 +28,7 @@ COPY env_spec/requirements.txt /app/env_spec/requirements.txt
 RUN pip install --no-cache-dir -r env_spec/requirements.txt
 
 # Copy the models.txt file into the container
-COPY env_spec/embedding_models.txt /app/models.txt
+COPY env_spec/embedding_models.txt /app/env_spec/embedding_models.txt
 
 # Download the Sentence Transformer models listed in models.txt
-RUN python -c "from sentence_transformers import SentenceTransformer; [SentenceTransformer(model.strip()) for model in open('/app/models.txt').readlines()]"
+RUN python -c "from sentence_transformers import SentenceTransformer; [SentenceTransformer(model.strip()) for model in open('/app/env_spec/embedding_models.txt').readlines()]"

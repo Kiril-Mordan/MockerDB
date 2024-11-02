@@ -1,9 +1,10 @@
 fastapi==0.111.0
 uvicorn==0.29.0
-mocker-db
 mkdocs==1.6.0
 mkdocs-material==9.5.27
 python-dotenv==1.0.0
 sentence-transformers==2.2.2
 pympler==1.0.1
 psutil==5.9.5
+transformers==4.30.0
+huggingface_hub==0.14.1
