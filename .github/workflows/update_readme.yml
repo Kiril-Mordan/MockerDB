@@ -1,9 +1,7 @@
 name: Generate API Documentation
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   generate-docs:
@@ -23,18 +21,19 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r env_spec/requirements.txt
         pip install mocker-db
+        pip install package-auto-assembler
 
     - name: Update API version
       run: |
-        chmod +x tools/get_update_package_version.sh
-        chmod +x tools/update_api_version.sh
+        chmod +x .github/tools/get_update_package_version.sh
+        chmod +x .github/tools/update_api_version.sh
 
-        ./tools/get_update_package_version.sh
-        ./tools/update_api_version.sh
+        .github/tools/get_update_package_version.sh
+        .github/tools/update_api_version.sh
 
     - name: Start FastAPI server
       run: |
-        uvicorn main:app --host 0.0.0.0 --port 8000 &
+        paa run-api-routes --package mocker-db --host 0.0.0.0 --port 8000 &
         echo "Waiting for FastAPI to launch on port 8000..."
         while ! nc -z localhost 8000; do
           sleep 1
@@ -47,12 +46,12 @@ jobs:
 
     - name: Generate Markdown and update README
       run: |
-        chmod +x tools/update_readme.sh
-        ./tools/update_readme.sh
+        chmod +x .github/tools/update_readme.sh
+        .github/tools/update_readme.sh
 
     - name: Commit and push README, tag
       run: |
-        chmod +x tools/make_and_push_tag.sh
+        chmod +x .github/tools/make_and_push_tag.sh
 
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
@@ -60,7 +59,7 @@ jobs:
 
         git add README.md docs/API_ENDPOINTS.md
 
-        ./tools/make_and_push_tag.sh
+        .github/tools/make_and_push_tag.sh
 
     - name: Update docker image description
       env:
@@ -68,6 +67,6 @@ jobs:
         DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         DOCKER_HUB_REPOSITORY: "mocker-db"
       run: |
-        chmod +x ./tools/update_docker_hub_description.sh
-        ./tools/update_docker_hub_description.sh "$DOCKER_HUB_USERNAME" "$DOCKER_HUB_PASSWORD" "$DOCKER_HUB_REPOSITORY"
+        chmod +x .github/tools/update_docker_hub_description.sh
+        .github/tools/update_docker_hub_description.sh "$DOCKER_HUB_USERNAME" "$DOCKER_HUB_PASSWORD" "$DOCKER_HUB_REPOSITORY"
 

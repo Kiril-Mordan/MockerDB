@@ -1,14 +1,7 @@
 name: Docker MockerDB Build and Push
 
 on:
-  workflow_call:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - env_spec/Dockerfile_run
-      - .github/workflows/*
 
 jobs:
   build_and_push:
@@ -31,7 +24,7 @@ jobs:
           uses: docker/build-push-action@v2
           with:
             context: .
-            file: ${{ github.workspace }}/env_spec/Dockerfile_run
+            file: ${{ github.workspace }}/Dockerfile
             push: true
             tags: kyriosskia/mocker-db:latest
 

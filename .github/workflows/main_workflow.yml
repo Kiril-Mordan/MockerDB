@@ -1,0 +1,135 @@
+name: Build Images
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-base:
+    runs-on: ubuntu-latest
+    if: >
+      contains(github.event.commits.*.modified, 'env_spec/requirements.txt') ||
+      contains(github.event.commits.*.modified, 'env_spec/Dockerfile_build') ||
+      contains(github.event.commits.*.modified, 'env_spec/embedding_models.txt')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ${{ github.workspace }}/env_spec/Dockerfile_base
+          push: true
+          tags: kyriosskia/mocker-db-dependancies:latest
+          platforms: linux/amd64
+
+  build-app:
+    runs-on: ubuntu-latest
+    needs: build-base
+    if: >
+      always() && (contains(github.event.commits.*.modified, 'Dockerfile') ||
+      contains(github.event.commits.*.modified, '.paa.api.config') ||
+      contains(github.event.commits.*.modified, '.mocker.api.config') ||
+      contains(github.event.commits.*.modified, 'entrypoint.sh'))
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ${{ github.workspace }}/Dockerfile
+          push: true
+          tags: kyriosskia/mocker-db:latest
+  
+  generate-docs:
+    runs-on: ubuntu-latest
+    needs: build-app
+    if: >
+      always()
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r env_spec/requirements.txt
+        pip install mocker-db
+        pip install package-auto-assembler
+
+    - name: Update API version
+      run: |
+        chmod +x .github/tools/get_update_package_version.sh
+        chmod +x .github/tools/update_api_version.sh
+
+        .github/tools/get_update_package_version.sh
+        .github/tools/update_api_version.sh
+
+    - name: Start FastAPI server
+      run: |
+        paa run-api-routes --package mocker-db --port 8000 &
+        echo "Waiting for FastAPI to launch on port 8000..."
+        while ! nc -z localhost 8000; do
+          sleep 1
+        done
+        echo "FastAPI server is up and running!"
+
+    - name: Fetch OpenAPI JSON
+      run: |
+        curl http://localhost:8000/openapi.json -o openapi.json
+
+    - name: Generate Markdown and update README
+      run: |
+        chmod +x .github/tools/update_readme.sh
+        .github/tools/update_readme.sh
+
+    - name: Commit and push README, tag
+      run: |
+        chmod +x .github/tools/make_and_push_tag.sh
+
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git pull origin HEAD:main
+
+        git add README.md docs/API_ENDPOINTS.md
+
+        .github/tools/make_and_push_tag.sh
+
+    - name: Update docker image description
+      env:
+        DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        DOCKER_HUB_REPOSITORY: "mocker-db"
+      run: |
+        chmod +x .github/tools/update_docker_hub_description.sh
+        .github/tools/update_docker_hub_description.sh "$DOCKER_HUB_USERNAME" "$DOCKER_HUB_PASSWORD" "$DOCKER_HUB_REPOSITORY"
