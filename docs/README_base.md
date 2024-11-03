@@ -18,9 +18,8 @@ pip install mocker-db
 
 Run API locally:
 ```
-git clone https://github.com/Kiril-Mordan/MockerDB.git
-cd MockerDB
-uvicorn main:app --port 8000
+pip install package-auto-assembler mocker-db
+paa run-api-routes --package mocker-db --host 127.0.0.1 --port 8000
 ```
 
 Access localhost at http://127.0.0.1:8000
